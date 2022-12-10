@@ -1,87 +1,99 @@
 #include <fstream>
 #include <iostream>
-#include <map>
-#include <string>
-#include <unordered_map>
-#include <utility>
+#include <optional>
+#include <set>
 
-namespace {
+constexpr char UPPER_BASE = 38;
+constexpr char LOWER_BASE = 96;
 
-enum class Opponent { ROCK = 'A', PAPER = 'B', SCISSOR = 'C' };
-enum class Me { ROCK = 'X', PAPER = 'Y', SCISSOR = 'Z' };
-enum class State { Win = 'Z', Loss = 'X', Draw = 'Y' };
+std::optional<char> findCommon(std::string_view first, std::string_view second) {
+  std::set<char> set;
 
-const std::unordered_map<Me, std::int64_t> scores{// NOLINT
-                                                  {Me::ROCK, 1},
-                                                  {Me::PAPER, 2},
-                                                  {Me::SCISSOR, 3}};
-
-const std::unordered_map<State, std::int64_t> scores_state{// NOLINT
-                                                           {State::Win, 6},
-                                                           {State::Loss, 0},
-                                                           {State::Draw, 3}};
-
-std::int64_t first() {
-  const std::map<std::pair<Opponent, Me>, State> map{
-      {{Opponent::ROCK, Me::ROCK}, State::Draw},
-      {{Opponent::ROCK, Me::PAPER}, State::Win},
-      {{Opponent::ROCK, Me::SCISSOR}, State::Loss},
-      {{Opponent::PAPER, Me::ROCK}, State::Loss},
-      {{Opponent::PAPER, Me::PAPER}, State::Draw},
-      {{Opponent::PAPER, Me::SCISSOR}, State::Win},
-      {{Opponent::SCISSOR, Me::ROCK}, State::Win},
-      {{Opponent::SCISSOR, Me::PAPER}, State::Loss},
-      {{Opponent::SCISSOR, Me::SCISSOR}, State::Draw},
-  };
-
-  std::fstream file{"data.txt"};
-  std::int64_t points{0};
-  std::string line;
-
-  for (std::uint64_t i = 0; std::getline(file, line); ++i) {
-    const auto opponent = static_cast<Opponent>(line[0]);
-    const auto me = static_cast<Me>(line[2]);
-
-    points += scores_state.find((map.find({opponent, me})->second))->second;
-    points += scores.find(me)->second;
+  for (const char c : first) {
+    set.emplace(c);
   }
 
-  return points;
+  for (const char c : second) {
+    if (set.contains(c)) {
+      return c;
+    }
+  }
+
+  return std::nullopt;
+}
+
+std::optional<char> findCommons(std::string_view first, std::string_view second, std::string_view third) {
+  std::set<char> first_set;
+  std::set<char> second_set;
+
+  for (const char c : first) {
+    first_set.emplace(c);
+  }
+
+  for (const char c : second) {
+    if (first_set.contains(c)) {
+      second_set.emplace(c);
+    }
+  }
+
+  for (const char c : third) {
+    if (second_set.contains(c)) {
+      return c;
+    }
+  }
+
+  return std::nullopt;
+}
+
+std::int64_t first() {
+  std::fstream file{"data.txt"};
+  std::string line;
+
+  std::int64_t sum = 0;
+
+  while (std::getline(file, line)) {
+    const std::string_view line_sv{line};
+    auto half = line_sv.size() / 2;
+    auto opt_char = findCommon(line_sv.substr(0, half), line_sv.substr(half, half));
+
+    if (opt_char.has_value()) {
+      auto c = opt_char.value();
+      if (isupper(c) != 0) {
+        sum += c - UPPER_BASE;
+      } else {
+        sum += c - LOWER_BASE;
+      }
+    }
+  }
+  return sum;
 }
 
 std::int64_t second() {
-  const std::map<std::pair<Opponent, State>, Me> map{
-      {{Opponent::ROCK, State::Win}, Me::PAPER},
-      {{Opponent::ROCK, State::Loss}, Me::SCISSOR},
-      {{Opponent::ROCK, State::Draw}, Me::ROCK},
-      {{Opponent::PAPER, State::Win}, Me::SCISSOR},
-      {{Opponent::PAPER, State::Loss}, Me::ROCK},
-      {{Opponent::PAPER, State::Draw}, Me::PAPER},
-      {{Opponent::SCISSOR, State::Win}, Me::ROCK},
-      {{Opponent::SCISSOR, State::Loss}, Me::PAPER},
-      {{Opponent::SCISSOR, State::Draw}, Me::SCISSOR},
-  };
-
   std::fstream file{"data.txt"};
-  std::int64_t points{0};
-  std::string line;
+  std::string elf1;
+  std::string elf2;
+  std::string elf3;
 
-  for (std::uint64_t i = 0; std::getline(file, line); ++i) {
-    const auto opponent = static_cast<Opponent>(line[0]);
-    const auto state = static_cast<State>(line[2]);
+  std::int64_t sum = 0;
 
-    points += scores_state.find(state)->second;
-    const Me me = map.find({opponent, state})->second;
-    points += scores.find(me)->second;
-  }
+  do {
+    std::getline(file, elf1);
+    std::getline(file, elf2);
+    std::getline(file, elf3);
 
-  return points;
+    auto opt_char = findCommons(elf1, elf2, elf3);
+
+    if (opt_char.has_value()) {
+      auto c = opt_char.value();
+      if (isupper(c) != 0) {
+        sum += c - UPPER_BASE;
+      } else {
+        sum += c - LOWER_BASE;
+      }
+    }
+  } while (!file.fail());
+
+  return sum;
 }
 
-} // namespace
-
-int main() {
-  std::cout << "Number of points: " << first() << "\n";
-  std::cout << "Number of points: " << second() << "\n";
-  std::cout.flush();
-}
+int main() { std::cout << "First problem: " << first() << " Second Problem: " << second() << std::endl; }

@@ -2,5 +2,6 @@ BasedOnStyle: LLVM
 AccessModifierOffset: -2
 BinPackArguments: false
 BinPackParameters: false
+ColumnLimit: 120
 IndentWidth: 2
 PackConstructorInitializers: CurrentLine
