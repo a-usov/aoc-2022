@@ -1,0 +1,6 @@
+Checks: "*,
+         -altera-unroll-loops,
+         -altera-id-dependent-backward-branch,
+         -fuchsia-default-arguments-calls,
+         -modernize-use-trailing-return-type,
+         -llvmlibc-*,"
