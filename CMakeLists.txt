@@ -3,4 +3,7 @@ project(aoc2022)
 
 set(CMAKE_CXX_STANDARD 23)
 
+find_package(absl REQUIRED)
+
 add_executable(aoc2022 main.cpp)
+target_link_libraries(aoc2022 absl::strings)
