@@ -1,118 +1,46 @@
-#include "absl/strings/numbers.h"
-#include <array>
+#include <deque>
 #include <fstream>
 #include <iostream>
-#include <iterator>
-#include <list>
-
-constexpr std::size_t N = 9;
-
-std::array<std::list<char>, N> readInput(std::fstream &file) {
-  std::array<std::list<char>, N> blocks{};
-
-  char c{0};
-  bool finishedBuilding{false};
-
-  while (!finishedBuilding) {
-    for (std::size_t n{0}; c != '\n'; ++n) {
-      file.get();
-      file.get(c);
-
-      if (c != ' ') {
-        if (isdigit(c) != 0) {
-          finishedBuilding = true;
-        } else {
-          blocks[n].emplace_front(c);
-        }
-      }
-
-      file.get();
-      file.get(c);
-    }
-
-    c = 0;
-  }
-
-  return blocks;
-}
-
-int one() {
-  std::fstream file{"data.txt"};
-
-  std::array<std::list<char>, N> blocks{readInput(file)};
-
-  std::string line;
-  while (file.good()) {
-    std::getline(file, line, ' ');
-
-    std::getline(file, line, ' ');
-    std::size_t toMove{0};
-    absl::SimpleAtoi(line, &toMove);
-
-    std::getline(file, line, ' ');
-
-    std::getline(file, line, ' ');
-    std::size_t from{0};
-    absl::SimpleAtoi(line, &from);
-
-    std::getline(file, line, ' ');
-
-    std::getline(file, line);
-    std::size_t to{0};
-    absl::SimpleAtoi(line, &to);
-
-    for (std::size_t n{0}; n < toMove; ++n) {
-      auto end = std::prev(blocks[from - 1].end());
-
-      blocks[to - 1].splice(blocks[to - 1].cend(), blocks[from - 1], end);
-    }
-  }
-
-  for (auto &list : blocks) {
-    std::cout << list.back();
-  }
-  std::cout << std::endl;
-}
-
-int two() {
-  std::fstream file{"data.txt"};
-
-  std::array<std::list<char>, N> blocks{readInput(file)};
-
-  std::string line;
-  while (file.good()) {
-    std::getline(file, line, ' ');
-
-    std::getline(file, line, ' ');
-    std::size_t toMove{0};
-    absl::SimpleAtoi(line, &toMove);
-
-    std::getline(file, line, ' ');
-
-    std::getline(file, line, ' ');
-    std::size_t from{0};
-    absl::SimpleAtoi(line, &from);
-
-    std::getline(file, line, ' ');
-
-    std::getline(file, line);
-    std::size_t to{0};
-    absl::SimpleAtoi(line, &to);
-
-    auto end = blocks[from - 1].cend();
-    auto start = blocks[from - 1].rbegin();
-    std::advance(start, toMove);
-
-    blocks[to - 1].splice(blocks[to - 1].cend(), blocks[from - 1], start.base(), end);
-  }
-
-  for (auto &list : blocks) {
-    std::cout << list.back();
-  }
-  std::cout << std::endl;
-}
+#include <string>
+#include <unordered_map>
 
 int main() {
-  one();
-  two();
+  constexpr std::size_t N = 14;
+
+  std::fstream file{"data.txt"};
+
+  std::deque<char> queue{};
+  std::unordered_map<char, std::int64_t> map{};
+
+  std::int64_t position{0};
+
+  char current{0};
+  while (file.good()) {
+    file.get(current);
+    ++position;
+
+    if (queue.size() >= N) {
+      const char last = queue.back();
+      queue.pop_back();
+
+      auto itr = map.find(last);
+      --itr->second;
+      if (itr->second == 0) {
+        map.erase(itr);
+      }
+    }
+    queue.emplace_front(current);
+
+    auto itr = map.find(current);
+    if (itr != map.cend()) {
+      ++itr->second;
+    } else {
+      map[current] = 1;
+    }
+
+    if (map.size() >= N) {
+      std::cout << position;
+      break;
+    }
+  }
 }
