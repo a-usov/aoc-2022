@@ -1,47 +1,118 @@
 #include "absl/strings/numbers.h"
-#include "absl/strings/str_split.h"
+#include <array>
 #include <fstream>
 #include <iostream>
-#include <string>
+#include <iterator>
+#include <list>
 
-int main() {
-  std::fstream file{"data.txt"};
-  std::string line;
+constexpr std::size_t N = 9;
 
-  std::int64_t count_complete = 0;
-  std::int64_t count_partial = 0;
+std::array<std::list<char>, N> readInput(std::fstream &file) {
+  std::array<std::list<char>, N> blocks{};
 
-  while (std::getline(file, line)) {
-    const std::pair<absl::string_view, absl::string_view> regions = absl::StrSplit(line, ',');
+  char c{0};
+  bool finishedBuilding{false};
 
-    const std::pair<absl::string_view, absl::string_view> elf1_str = absl::StrSplit(regions.first, '-');
-    std::pair<std::int64_t, std::int64_t> elf1{0, 0};
-    absl::SimpleAtoi(elf1_str.first, &elf1.first);
-    absl::SimpleAtoi(elf1_str.second, &elf1.second);
+  while (!finishedBuilding) {
+    for (std::size_t n{0}; c != '\n'; ++n) {
+      file.get();
+      file.get(c);
 
-    const std::pair<absl::string_view, absl::string_view> elf2_str = absl::StrSplit(regions.second, '-');
-    std::pair<std::int64_t, std::int64_t> elf2{0, 0};
-    absl::SimpleAtoi(elf2_str.first, &elf2.first);
-    absl::SimpleAtoi(elf2_str.second, &elf2.second);
-
-    if (elf2.first < elf1.first) {
-      std::swap(elf1, elf2);
-    } else if (elf2.first == elf1.first) {
-      if (elf2.second > elf1.second) {
-        std::swap(elf1, elf2);
+      if (c != ' ') {
+        if (isdigit(c) != 0) {
+          finishedBuilding = true;
+        } else {
+          blocks[n].emplace_front(c);
+        }
       }
+
+      file.get();
+      file.get(c);
     }
 
-    std::cout << elf1.first << " " << elf1.second << " " << elf2.first << " " << elf2.second << std::endl;
+    c = 0;
+  }
 
-    if (elf1.second >= elf2.second) {
-      ++count_complete;
-    }
+  return blocks;
+}
 
-    if (elf2.first <= elf1.second) {
-      ++count_partial;
+int one() {
+  std::fstream file{"data.txt"};
+
+  std::array<std::list<char>, N> blocks{readInput(file)};
+
+  std::string line;
+  while (file.good()) {
+    std::getline(file, line, ' ');
+
+    std::getline(file, line, ' ');
+    std::size_t toMove{0};
+    absl::SimpleAtoi(line, &toMove);
+
+    std::getline(file, line, ' ');
+
+    std::getline(file, line, ' ');
+    std::size_t from{0};
+    absl::SimpleAtoi(line, &from);
+
+    std::getline(file, line, ' ');
+
+    std::getline(file, line);
+    std::size_t to{0};
+    absl::SimpleAtoi(line, &to);
+
+    for (std::size_t n{0}; n < toMove; ++n) {
+      auto end = std::prev(blocks[from - 1].end());
+
+      blocks[to - 1].splice(blocks[to - 1].cend(), blocks[from - 1], end);
     }
   }
 
-  std::cout << "Overlaps: " << count_complete << " partial: " << count_partial << std::endl;
+  for (auto &list : blocks) {
+    std::cout << list.back();
+  }
+  std::cout << std::endl;
+}
+
+int two() {
+  std::fstream file{"data.txt"};
+
+  std::array<std::list<char>, N> blocks{readInput(file)};
+
+  std::string line;
+  while (file.good()) {
+    std::getline(file, line, ' ');
+
+    std::getline(file, line, ' ');
+    std::size_t toMove{0};
+    absl::SimpleAtoi(line, &toMove);
+
+    std::getline(file, line, ' ');
+
+    std::getline(file, line, ' ');
+    std::size_t from{0};
+    absl::SimpleAtoi(line, &from);
+
+    std::getline(file, line, ' ');
+
+    std::getline(file, line);
+    std::size_t to{0};
+    absl::SimpleAtoi(line, &to);
+
+    auto end = blocks[from - 1].cend();
+    auto start = blocks[from - 1].rbegin();
+    std::advance(start, toMove);
+
+    blocks[to - 1].splice(blocks[to - 1].cend(), blocks[from - 1], start.base(), end);
+  }
+
+  for (auto &list : blocks) {
+    std::cout << list.back();
+  }
+  std::cout << std::endl;
+}
+
+int main() {
+  one();
+  two();
 }
